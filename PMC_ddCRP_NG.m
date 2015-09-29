@@ -1,8 +1,8 @@
-function samples = PMC_ddCRP_NG(X,A,opts)
+function [MAP, samples] = PMC_ddCRP_NG(X,A,opts)
 
 %PMC_ddCRP_NG samples from posterior cluster distribution
 %
-%   samples = PMC_ddCRP_NG(X,A) for data matrix X and neigbourhood list A
+%   MAP = PMC_ddCRP_NG(X,A) for data matrix X and neigbourhood list A
 %   returns 100 samples using default hyperparameters. The first column of
 %   the cell array samples contains the customer assignments for each of
 %   the samples. The second column contains the corresponding cluster
@@ -12,7 +12,7 @@ function samples = PMC_ddCRP_NG(X,A,opts)
 %   careful not to include them in the neighbourhood definition of nodes
 %   that should be clustered.
 %
-%   samples = PMC_ddCRP_NG(X,A,opts) returns the samples with settings as
+%   [MAP, samples] = PMC_ddCRP_NG(X,A,opts) returns the samples with settings as
 %   specified in the structure variable opts. This variable takes the
 %   following fields (fields not set by the user are set to the default
 %   values noted in parentheses):
@@ -52,7 +52,7 @@ function samples = PMC_ddCRP_NG(X,A,opts)
 %
 %	If you use this code in your research, please cite the following paper:
 % 
-%	Janssen, R. J., Jylänki, P., Kessels, R. P. C., & van Gerven, M. A. J. 
+%	Janssen, R. J., Jyl�nki, P., Kessels, R. P. C., & van Gerven, M. A. J. 
 % (2015). Probabilistic model-based functional parcellation reveals a 
 % robust, fine-grained subdivision of the striatum. NeuroImage, 119, 
 % 398–405. http://doi.org/10.1016/j.neuroimage.2015.06.084
@@ -61,6 +61,7 @@ function samples = PMC_ddCRP_NG(X,A,opts)
 
 [T, N] = size(X);
 weights = cellfun(@ones,num2cell(cellfun(@length,A)),num2cell(ones(size(A))),'UniformOutput',false);
+MAP.LP = -inf;
 
 for i = 1:length(A)
   A{i} = A{i}(:)';
@@ -146,15 +147,29 @@ elseif numel(temp)>steps
   warning('More temperature steps provided than samples requested.\nFinal temperature steps will be disregarded')
 end
 K = max(Pi);
-samples = cell(steps,2);
+if nargout>1
+  samples = cell(steps,2);
+end
 
 fprintf('Initialised with %d clusters\n',K)
 for s = 1:steps
   fprintf('Generating sample %d',s)
   opt.temp = temp(ones(thinning,1)*s);
   [cLinks, opt.Pi, opt.ClustMembers, opt.allLLs] = ddCRP_NGgensamp(X, cLinks, A, hyp, opt);
-  samples{s,1} = cLinks;
-  samples{s,2} = opt.Pi;
+  if nargout>1
+    samples{s,1} = cLinks;
+    samples{s,2} = opt.Pi;
+  end
   LP = LPddCRP_NG(X,A,cLinks,opt.Pi,hyp,weights);
+  if LP>MAP.LP
+    MAP.LP = LP;
+    MAP.Pi = opt.Pi;
+  end
   fprintf('Sample contains %d clusters; logprob = %4.2f\n',max(opt.Pi),LP)
 end
+
+% Reconstruct cluster timecourses for the MAP parcellation
+K = max(MAP.Pi);
+Z = bsxfun(@eq,MAP.Pi,1:K);
+Nks = sum(Z);
+MAP.ClusterTCs = bsxfun(@rdivide,hyp.kappa0.*hyp.mu0+ X*Z,hyp.kappa0+Nks);

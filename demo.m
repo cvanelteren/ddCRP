@@ -67,22 +67,38 @@ opts.hyp.a0 = 2;
 opts.hyp.b0 = 1;
 opts.hyp.mu0 = 0;
 opts.hyp.kappa0 = 1;
-samples = PMC_ddCRP_NG(Y',A,opts);
+[MAP, samples] = PMC_ddCRP_NG(Y',A,opts);
 
-Z = double(bsxfun(@eq,samples{end,2},1:max(samples{end,2})));
+Z = double(bsxfun(@eq,MAP.Pi,1:max(MAP.Pi)));
 Q = Z*Z';
 
 Ztrue = double(bsxfun(@eq,Pi_true,1:K));
 Qtrue = Ztrue*Ztrue';
 
 figure(2);set(2,'OuterPosition',[1 40 figdim])
-subplot(1,2,1)
-colormap hot
+subplot(2,2,1)
+colormap([0 0 0; rand(20,3); 1 1 1])
 imagesc(Qtrue(inds,inds));
+axis square
+title('True cluster structure')
+
+subplot(2,2,2)
+imagesc(Q(inds,inds));
+axis square
+title('Empirical cluster structure')
+
+subplot(2,2,3)
+% colormap hot
+imagesc(reshape(Pi_true,dims));
 axis square
 title('True coassignment-matrix')
 
-subplot(1,2,2)
-imagesc(Q(inds,inds));
+subplot(2,2,4)
+imagesc(reshape(MAP.Pi,dims));
 axis square
 title('Empirical coassignment-matrix')
+
+figure(3);set(3,'OuterPosition',[figdim(1) screensize(4)-figdim(2) figdim])
+Ktrue=2;
+Kemp = mode(MAP.Pi(Pi_true==Ktrue));
+plot(1:T,zscore([X(Ktrue,:)' MAP.ClusterTCs(:,Kemp)]))
