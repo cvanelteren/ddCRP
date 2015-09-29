@@ -101,4 +101,11 @@ title('Empirical coassignment-matrix')
 figure(3);set(3,'OuterPosition',[figdim(1) screensize(4)-figdim(2) figdim])
 Ktrue=2;
 Kemp = mode(MAP.Pi(Pi_true==Ktrue));
-plot(1:T,zscore([X(Ktrue,:)' MAP.ClusterTCs(:,Kemp)]))
+h3=fill([(1:100) (100:-1:1)],[MAP.ClusterTCs(:,Kemp)-MAP.ClusterCI(:,Kemp); MAP.ClusterTCs(end:-1:1,Kemp)+MAP.ClusterCI(end:-1:1,Kemp)]./std(MAP.ClusterTCs(:,Kemp)-mean(MAP.ClusterTCs(:,Kemp)))',[.6 .6 1],'edgecolor','none');
+hold on
+h1=plot(1:T,zscore(X(Ktrue,:)),'k','LineWidth',2);
+h2=plot(1:T,zscore(MAP.ClusterTCs(:,Kemp)),'b');
+hold off
+title(sprintf('Example cluster timecourse (true cluster %d)',Ktrue))
+legend([h1 h2 h3],'Ground truth','MAP estimate','95% CI')
+

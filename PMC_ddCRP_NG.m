@@ -172,4 +172,18 @@ end
 K = max(MAP.Pi);
 Z = bsxfun(@eq,MAP.Pi,1:K);
 Nks = sum(Z);
-MAP.ClusterTCs = bsxfun(@rdivide,hyp.kappa0.*hyp.mu0+ X*Z,hyp.kappa0+Nks);
+XbarN = X*Z; % Xbar*N
+Xbar = bsxfun(@rdivide,XbarN,Nks);
+mu_n = bsxfun(@rdivide,hyp.kappa0.*hyp.mu0+ XbarN,hyp.kappa0+Nks);
+kappa_n = Nks+hyp.kappa0;
+a_n = hyp.a0+Nks./2;
+b_n = hyp.b0 + 0.5 * ((X-XbarN(:,MAP.Pi)).^2)*Z + bsxfun(@rdivide,hyp.kappa0.*bsxfun(@times,Nks,(Xbar-hyp.mu0).^2),2.*(hyp.kappa0+Nks));
+
+s2 = bsxfun(@rdivide,b_n,(a_n.*kappa_n));
+t = tinv(0.975,2*a_n);
+
+MAP.ClusterTCs = mu_n;
+MAP.ClusterCI = bsxfun(@times,t./(2.*a_n+1),sqrt(s2));
+
+
+
