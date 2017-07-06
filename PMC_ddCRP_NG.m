@@ -52,7 +52,7 @@ function [MAP, samples] = PMC_ddCRP_NG(X,A,opts)
 %
 %	If you use this code in your research, please cite the following paper:
 % 
-%	Janssen, R. J., Jylänki, P., Kessels, R. P. C., & van Gerven, M. A. J. 
+%	Janssen, R. J., Jylï¿½nki, P., Kessels, R. P. C., & van Gerven, M. A. J. 
 % (2015). Probabilistic model-based functional parcellation reveals a 
 % robust, fine-grained subdivision of the striatum. NeuroImage, 119, 
 % 398â€“405. http://doi.org/10.1016/j.neuroimage.2015.06.084
@@ -122,10 +122,11 @@ else
   ClustMembers = cell(N,1);
   Pi=link2Pi(cLinks);
   if ~isempty(exclude)
-    Pi(exclude) = 0;
+%     Pi(exclude) = 0; # this makes unique of this just a 1 member list
     list = unique(Pi(exclude));
+    % which makes this loop redundant?
     for i = 0:(length(list)-1)
-      Pi(Pi>list(end-i)) = Pi(Pi>list(end-i))-1;
+      Pi(Pi>list(end-i)) = Pi(Pi>list(end-i))-1; % assigns the empty members to  others?
     end
   end
   K = max(Pi);
@@ -133,10 +134,12 @@ else
     ClustMembers{k} = find(Pi==k);
   end
 end
-
+% idx = find(Pi == 0);
+% Pi(idx) = idx;
 opt.steps = thinning;
 opt.Pi = Pi;
 opt.ClustMembers = ClustMembers;
+
 
 if numel(temp)==1
   temp = temp(ones(steps,1));

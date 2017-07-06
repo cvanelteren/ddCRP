@@ -45,6 +45,7 @@ if ~exist('Pi','var')
     Pi(ClustMembers{K}) = K;
     list(ismember(list,ClustMembers{K})) = [];
   end
+
 else
   Pi = Pi(:);
   K = max(Pi);
@@ -152,7 +153,10 @@ for s = 1:steps
         c_l = min(k1,k2); c_h = max(k1,k2);
         Pi(Pi==c_h) = c_l;
         Pi(Pi>c_h) = Pi(Pi>c_h)-1;
-        ClustMembers{c_l} = [ClustMembers{[k1 k2]}];
+%         ClustMembers{c_l} = [ClustMembers{[k1 k2]}]; %errros in matlab2016b
+        a = ClustMembers{k1}; b = ClustMembers{k2};
+        
+        ClustMembers{c_l} = unique(vertcat(a(:), b(:)));
         ClustMembers(c_h) = [];
         %             allLLs(c_l) = singleClustLL(X(:,ClustMembers{c_l}),a0,b0,mu0,kappa0);
         allLLs(c_l) = LLs(Klist==fKlist(c_i),3);
